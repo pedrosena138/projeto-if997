@@ -20,38 +20,41 @@ def csvParaParquet(caminhoCsv, caminhoParquet):
 def procurarAnomalias(df):
     numLinhasInvalidas = 0
     cont = 0
-    for (idx, linha) in df.iterrows():
+    np = df.to_numpy()
+    for linha in np:    
         if(printarLinhaInvalida(linha, cont)):
             numLinhasInvalidas += 1
         cont += 1
     print(f"Linhas: {cont}")
     print(f"Linhas inválidas: {numLinhasInvalidas}")
 
-def printarStringInvalida(valor, coluna, erroLinha):
+def printarStringInvalida(valor, coluna):
     if (valor == "" or valor == None) :
-        erroLinha += f"{coluna} vazia ou nula | "
+        return f"{coluna} vazia ou nula | "
+    return ""
 
-def printarBooleanInvalido(valor, coluna, erroLinha):
+def printarBooleanInvalido(valor, coluna):
     if (valor != 1 and valor != 0):
-        erroLinha += f"{coluna} não é boolean | "
+        return f"{coluna} não é boolean | "
+    return ""
 
 def printarLinhaInvalida(linha, numLinha):
     erroLinha = ""
-    printarStringInvalida(linha[0], "ID", erroLinha)
-    printarStringInvalida(linha[1], "accountID", erroLinha)
-    printarStringInvalida(linha[2], "deviceID", erroLinha)
-    printarStringInvalida(linha[3], "installationID", erroLinha)
+    erroLinha += printarStringInvalida(linha[0], "ID")
+    erroLinha += printarStringInvalida(linha[1], "accountID")
+    erroLinha += printarStringInvalida(linha[2], "deviceID")
+    erroLinha += printarStringInvalida(linha[3], "installationID")
     
-    printarBooleanInvalido(linha[5], "isFromOfficialStore", erroLinha)
-    printarBooleanInvalido(linha[6], "isEmulator", erroLinha)
-    printarBooleanInvalido(linha[7], "hasFakeLocationApp", erroLinha)
-    printarBooleanInvalido(linha[8], "hasFakeLocationEnabled", erroLinha)
-    printarBooleanInvalido(linha[9], "probableRoot", erroLinha)
-    printarBooleanInvalido(linha[12], "neverPermittedLocationOnAccount", erroLinha)
-    printarBooleanInvalido(linha[16], "ato", erroLinha)
+    erroLinha += printarBooleanInvalido(linha[5], "isFromOfficialStore")
+    erroLinha += printarBooleanInvalido(linha[6], "isEmulator")
+    erroLinha += printarBooleanInvalido(linha[7], "hasFakeLocationApp")
+    erroLinha += printarBooleanInvalido(linha[8], "hasFakeLocationEnabled")
+    erroLinha += printarBooleanInvalido(linha[9], "probableRoot")
+    erroLinha += printarBooleanInvalido(linha[12], "neverPermittedLocationOnAccount")
+    erroLinha += printarBooleanInvalido(linha[16], "ato")
     
     if (erroLinha != ""): 
-        print(numLinha + ": " + erroLinha)   
+        print(str(numLinha) + ": " + erroLinha + "\n")   
         return True
     return False   
 
@@ -59,16 +62,19 @@ def limparBd (df):
     print("Tamanho inicial: " + str(len(df)))
     inicio = time.time()
     colunas = df.columns
-    indexes = []
+    cont = 0
+    indices = []
+    dados = df.to_numpy()
     
-    for (idx, row) in df.iterrows():
-        print(idx)
-        if (linhaCorreta(row) == False):
-            indexes.append(idx)
-        
-    df.drop(indexes)
+    for linha in dados:
+        if (linhaCorreta(linha) == False):
+            indices.append(cont)
+        cont += 1
+    dados = np.delete(dados, indices, axis=0)
+    df = pd.DataFrame(dados, columns=colunas)
+    print("Qtd linhas inválidas: " + str(len(indices)))
     print("Tamanho final: " + str(len(df)))    
-    print("Demorou: " + str(time.time() - inicio) + "ms")
+    print("Demorou: " + str(time.time() - inicio) + " segundos")
     df.to_parquet("teste.parquet4")
 
 def stringValida(valores):
@@ -96,5 +102,4 @@ def linhaCorreta(linha):
 
 df = pd.read_parquet('./dataset/logins.parquet4')
 #print(df.isna().sum())
-print(len(df))
-procurarAnomalias(df)
+limparBd(df)
